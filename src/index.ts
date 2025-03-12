@@ -1,24 +1,64 @@
-import { addMovie, rateMovie, getAverageRating, getTopRatedMovies } from "./movies";
+import { addMovie, rateMovie, getMovie, getAverageRating, getAllMovies } from "./movies";
+import * as readline from "readline";
 
-addMovie("1", "Inception", "Christopher Nolan", 2010, "Sci-Fi");
-addMovie("2", "The Dark Knight", "Christopher Nolan", 2008, "Action");
-addMovie("3", "Interstellar", "Christopher Nolan", 2014, "Sci-Fi");
-addMovie("4", "The Matrix", "Lana Wachowski, Lilly Wachowski", 1999, "Sci-Fi");
-addMovie("5", "Pulp Fiction", "Quentin Tarantino", 1994, "Crime");
-addMovie("6", "KGF", "Prashanth Neel", 2018, "Action");
-addMovie("7", "Max: Fury Road", "George Miller", 2015, "Action");
-addMovie("8", "Kantara", "Rishab Shetty", 2022, "Drama");
-addMovie("9", "Max", "Kannada Director", 2025, "Action");
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
-rateMovie("1", 5);
-rateMovie("2", 4);
-rateMovie("3", 5);
-rateMovie("4", 4);
-rateMovie("5", 5);
-rateMovie("6", 5);
-rateMovie("7", 4);
-rateMovie("8", 5);
-rateMovie("9", 5);
+function askQuestion(query: string): Promise<string> {
+  return new Promise((resolve) => rl.question(query, resolve));
+}
 
-console.log(getAverageRating("1")); // 5
-console.log(getTopRatedMovies());
+async function main() {
+  const movieCount = parseInt(await askQuestion("How many movies do you want to add? "));
+
+  for (let i = 0; i < movieCount; i++) {
+    console.log(`\nEnter details for movie ${i + 1}:`);
+    const id = await askQuestion("Movie ID: ");
+    const title = await askQuestion("Title: ");
+    const director = await askQuestion("Director: ");
+    const releaseYear = parseInt(await askQuestion("Release Year: "));
+    const genre = await askQuestion("Genre: ");
+
+    try {
+      addMovie(id, title, director, releaseYear, genre);
+      console.log(`Movie '${title}' added successfully!`);
+    } catch (error) {
+      console.error(error.message);
+      i--; // Retry input if there's an error
+    }
+  }
+
+  const rateMovieCount = parseInt(await askQuestion("\nHow many movies do you want to rate? "));
+
+  for (let i = 0; i < rateMovieCount; i++) {
+    const movieId = await askQuestion("Enter Movie ID to rate: ");
+    const rating = parseInt(await askQuestion("Enter rating (1-5): "));
+
+    try {
+      rateMovie(movieId, rating);
+      console.log(`Rating added successfully!`);
+    } catch (error) {
+      console.error(error.message);
+      i--; // Retry input if there's an error
+    }
+  }
+
+  console.log("\nMovies List:");
+  console.table(getAllMovies());
+
+  const searchMovieId = await askQuestion("\nEnter a Movie ID to get details: ");
+  const movie = getMovie(searchMovieId);
+
+  if (movie) {
+    console.log("Movie Details:", movie);
+    console.log("Average Rating:", getAverageRating(searchMovieId) ?? "No ratings yet");
+  } else {
+    console.log("Movie not found.");
+  }
+
+  rl.close();
+}
+
+main();
